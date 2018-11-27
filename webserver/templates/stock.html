@@ -10,14 +10,16 @@
 <body>
   <h1>{{name}} ({{ticker}})</h1>
 <h2>{{industry}}</h2>
-  
-{% for n in data %}
-{{n}}<br>
-{% endfor %}
 
-<form method="POST" action="/add">
-<p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>
-</form>
+<table>
+<tr>
+<th>Date</th> <th>Open Price</th> <th>Close Price</th>
+</tr>
+{% for n in performance %}
+<tr>
+<td>{{n[0]}}</td> <td>{{n[1]}}</td> <td>{{n[2]}}</td>
+</tr>
+{% endfor %}
 
 </body>
 

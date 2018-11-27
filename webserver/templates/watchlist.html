@@ -10,14 +10,23 @@
 <body>
   <h1>Watchlist
 </h1>
-  
+
+<table>
+<tr>
+<th>Stock</th> <th>Delete</th>
+</tr>
 {% for n in data %}
-{{n[0]}} ({{n[1]}}) <button type="submit" formmethod="POST" formaction="/delete" name="stock" value={{n[1]}}>X</button><br>
+<tr>
+<td>{{n[0]}} ({{n[1]}})</td> <td><form method="POST" action="/delete"><input type="submit" name="stock" value={{n[1]}}></form></td>
+</tr>
 {% endfor %}
+</table>
 
 <form method="POST" action="/add">
 <p>Add stock to watchlist: <input type="text" name="stock" placeholder="ticker"> <input type="submit" value="Add"></p>
 </form>
+
+<a href="/" class="button">Back</a>
 
 </body>
 
