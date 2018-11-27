@@ -127,12 +127,12 @@ def index():
       #
       # example of a database query
       #
-      cursor = g.conn.execute(str("SELECT user_id, user_name FROM App_user WHERE user_id = '" + user + "'"))
+      cursor = g.conn.execute("SELECT user_id, user_name FROM App_user WHERE user_id = '" + user + "'")
       ids = []
       names = []
       for result in cursor:
         ids.append(result['user_id'])
-        names.append(result['user_name'])
+        names.append(result['user_name'].upper())
       cursor.close()
 
 
@@ -211,7 +211,7 @@ def add():
 @app.route('/delete', methods=['POST'])
 def delete():
   stock = request.form['stock']
-  g.conn.execute("DELETE FROM Watchlist WHERE user_id = '" + user + "' AND ticker = '" + stock + "' IF EXISTS")
+  g.conn.execute("DELETE FROM Watchlist WHERE user_id = '" + user + "' AND ticker = '" + stock + "'")
   return redirect('/watchlist')
 
 
@@ -278,24 +278,37 @@ def purchase():
       g.conn.execute("INSERT INTO Transaction_purchase VALUES ('" + ID + "', '" + user + "', '" + stock + "', '2018-10-22', " + amount + ")");
       return redirect('/portfolio')
 
-@app.route('/stock')
-def stockinfo():
+@app.route('/search', methods=['POST'])
+def search():
     s = request.form['stock']
-    if s != '':
-        cursor = g.conn.execute("SELECT * FROM Stock WHERE ticker = '" + s + "'")
-        for result in cursor:
-            context = dict(ticker = result['ticker'], name = result['name'], industry = result['industry'])
-            #t = result['ticker']
-            #name = result['name']
-            #industry = result['industry']
-        cursor.close()
-
-        #context = dict(ticker = t, name = name, industry = industry)
+    cursor = g.conn.execute("SELECT ticker FROM Stock")
+    tickers = []
+    for result in cursor:
+        tickers.append(result['ticker'])
+    cursor.close()
+    
+    if s in tickers:
+        cursor2 = g.conn.execute("SELECT * FROM Stock WHERE ticker = '" + s + "'")
+        for result in cursor2:
+            ticker = result['ticker']
+            name = result['name']
+            industry = result['industry']
+        cursor2.close()
+        
+        performance = []
+        cursor3 = g.conn.execute("SELECT * FROM Tick WHERE ticker = '" + s + "' ORDER BY record_date DESC")
+        for result in cursor3:
+            performance.append((result['record_date'], result['open_price'], result['close_price']))
+        cursor3.close()
+        
+        context = dict(ticker = ticker, name = name, industry = industry, performance = performance)
+        return render_template("stock.html", **context)
 
     else:
-        context = dict(ticker = None, name = None, industry = None)
+        print("Invalid request")
+        return index()
 
-    return render_template("stock.html", **context)
+
 
 # =============================================================================
 # @app.route('/check')
