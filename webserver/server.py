@@ -203,13 +203,7 @@ def chat():
 # Example of adding new data to the database
 @app.route('/add', methods=['POST'])
 def add():
-<<<<<<< Updated upstream
-  name = request.form['name']
-  print (name)
-  cmd = 'INSERT INTO test(name) VALUES (:name1), (:name2)';
-  g.conn.execute(text(cmd), name1 = name, name2 = name);
-  return redirect('/')
-=======
+
   stock = request.form['stock']
   g.conn.execute("INSERT INTO Watchlist VALUES ('" + user + "', '" + stock + "')")
   return redirect('/watchlist')
@@ -219,7 +213,7 @@ def delete():
   stock = request.form['stock']
   g.conn.execute("DELETE FROM Watchlist WHERE user_id = '" + user + "' AND ticker = '" + stock + "' IF EXISTS")
   return redirect('/watchlist')
->>>>>>> Stashed changes
+
 
 
 @app.route('/login', methods=['POST'])
@@ -252,9 +246,9 @@ def watchlist():
     for result in cursor:
         stocks.append((result['name'], result['ticker']))
     cursor.close()
-    
+
     context = dict(data = stocks)
-    
+
     return render_template("watchlist.html", **context)
 
 @app.route('/portfolio')
@@ -269,11 +263,11 @@ def portfolio():
         for result2 in cursor2:
             price = result2['close_price']
         cursor2.close()
-        purchases.append((name, ticker, amount, price, price*amount)) 
+        purchases.append((name, ticker, amount, price, price*amount))
     cursor.close()
 
     context = dict(data = purchases)
-    
+
     return render_template("portfolio.html", **context)
 
 @app.route('/purchase', methods=['POST'])
@@ -283,7 +277,7 @@ def purchase():
       ID = ''.join(choice(ascii_uppercase + digits) for _ in range(12))
       g.conn.execute("INSERT INTO Transaction_purchase VALUES ('" + ID + "', '" + user + "', '" + stock + "', '2018-10-22', " + amount + ")");
       return redirect('/portfolio')
-    
+
 @app.route('/stock')
 def stockinfo():
     s = request.form['stock']
@@ -295,12 +289,12 @@ def stockinfo():
             #name = result['name']
             #industry = result['industry']
         cursor.close()
-        
+
         #context = dict(ticker = t, name = name, industry = industry)
-    
+
     else:
         context = dict(ticker = None, name = None, industry = None)
-        
+
     return render_template("stock.html", **context)
 
 # =============================================================================
