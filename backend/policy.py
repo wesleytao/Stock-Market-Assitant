@@ -2,6 +2,21 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
+import copy
+import json
+import logging
+import os
+import tensorflow as tf
+import warnings
+from typing import Any, List, Dict, Text, Optional, Tuple
+
+from rasa_core import utils
+from rasa_core.domain import Domain
+from rasa_core.featurizers import (
+    MaxHistoryTrackerFeaturizer, BinarySingleStateFeaturizer)
+from rasa_core.featurizers import TrackerFeaturizer
+from rasa_core.policies.policy import Policy
+from rasa_core.trackers import DialogueStateTracker
 
 import logging
 
@@ -60,3 +75,36 @@ class CustomPolicy(KerasPolicy):
 
         logger.debug(model.summary())
         return model
+
+    def train(self,
+              training_trackers: List[DialogueStateTracker],
+              domain: Domain,
+              **kwargs: Any
+              ) -> None:
+
+        training_data = self.featurize_for_training(training_trackers,
+                                                    domain,
+                                                    **kwargs)
+
+        # noinspection PyPep8Naming
+        shuffled_X, shuffled_y = training_data.shuffled_X_y()
+
+        self.graph = tf.Graph()
+        with self.graph.as_default():
+            self.session = tf.Session()
+            with self.session.as_default():
+                if self.model is None:
+                    self.model = self.model_architecture(shuffled_X.shape[1:],
+                                                         shuffled_y.shape[1:])
+
+                logger.info("Fitting model with {} total samples and a "
+                            "validation split of {}"
+                            "".format(training_data.num_examples(),
+                                      self.validation_split))
+                # filter out kwargs that cannot be passed to fit
+                params = self._get_valid_params(self.model.fit, **kwargs)
+
+                self.model.fit(shuffled_X, shuffled_y, **params)
+                # the default parameter for epochs in keras fit is 1
+                self.current_epoch = self.defaults.get("epochs", 1)
+                logger.info("Done fitting keras policy model")
