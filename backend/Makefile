@@ -21,7 +21,7 @@ run-actions:
 	python -m rasa_core_sdk.endpoint --actions actions
 
 run-core:
-	python -m rasa_core.run --enable_api --debug --nlu models/nlu/default/current --core models/dialogue
+	python -m rasa_core.run --enable_api --debug --nlu models/nlu/default/current --core models/dialogue --endpoint endpoints.yml
 
 train-nlu:
 	python bot.py train-nlu
