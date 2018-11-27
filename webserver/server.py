@@ -18,7 +18,7 @@ Read about it online.
 import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response
+from flask import Flask, request, render_template, g, redirect, Response, session, flash, abort
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -36,8 +36,8 @@ app = Flask(__name__, template_folder=tmpl_dir)
 # For your convenience, we already set it to the class database
 
 # Use the DB credentials you received by e-mail
-DB_USER = "YOUR_DB_USERNAME_HERE"
-DB_PASSWORD = "YOUR_DB_PASSWORD_HERE"
+DB_USER = "alm2263"
+DB_PASSWORD = "tu8mi5r0"
 
 DB_SERVER = "w4111.cisxo09blonu.us-east-1.rds.amazonaws.com"
 
@@ -58,7 +58,7 @@ engine.execute("""CREATE TABLE IF NOT EXISTS test (
 );""")
 engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
 
-
+user = ''
 
 @app.before_request
 def before_request():
@@ -116,50 +116,54 @@ def index():
   # DEBUG: this is debugging code to see what request looks like
   print request.args
 
-
-  #
-  # example of a database query
-  #
-  cursor = g.conn.execute("SELECT name FROM test")
-  names = []
-  for result in cursor:
-    names.append(result['name'])  # can also be accessed using result[0]
-  cursor.close()
-
-  #
-  # Flask uses Jinja templates, which is an extension to HTML where you can
-  # pass data to a template and dynamically generate HTML based on the data
-  # (you can think of it as simple PHP)
-  # documentation: https://realpython.com/blog/python/primer-on-jinja-templating/
-  #
-  # You can see an example template in templates/index.html
-  #
-  # context are the variables that are passed to the template.
-  # for example, "data" key in the context variable defined below will be 
-  # accessible as a variable in index.html:
-  #
-  #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
-  #     <div>{{data}}</div>
-  #     
-  #     # creates a <div> tag for each element in data
-  #     # will print: 
-  #     #
-  #     #   <div>grace hopper</div>
-  #     #   <div>alan turing</div>
-  #     #   <div>ada lovelace</div>
-  #     #
-  #     {% for n in data %}
-  #     <div>{{n}}</div>
-  #     {% endfor %}
-  #
-  context = dict(data = names)
-
-
-  #
-  # render_template looks in the templates/ folder for files.
-  # for example, the below file reads template/index.html
-  #
-  return render_template("index.html", **context)
+  if not session.get('logged_in'):
+        return render_template('login.html')
+  else:
+      #
+      # example of a database query
+      #
+      cursor = g.conn.execute(str("SELECT user_id, user_name FROM App_user WHERE user_id = '" + user + "'"))
+      ids = []
+      names = []
+      for result in cursor:
+        ids.append(result['user_id'])
+        names.append(result['user_name'])
+      cursor.close()
+      
+      
+      # Flask uses Jinja templates, which is an extension to HTML where you can
+      # pass data to a template and dynamically generate HTML based on the data
+      # (you can think of it as simple PHP)
+      # documentation: https://realpython.com/blog/python/primer-on-jinja-templating/
+      #
+      # You can see an example template in templates/index.html
+      #
+      # context are the variables that are passed to the template.
+      # for example, "data" key in the context variable defined below will be 
+      # accessible as a variable in index.html:
+      #
+      #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
+      #     <div>{{data}}</div>
+      #     
+      #     # creates a <div> tag for each element in data
+      #     # will print: 
+      #     #
+      #     #   <div>grace hopper</div>
+      #     #   <div>alan turing</div>
+      #     #   <div>ada lovelace</div>
+      #     #
+      #     {% for n in data %}
+      #     <div>{{n}}</div>
+      #     {% endfor %}
+      #
+      context = dict(data = names)
+    
+    
+      #
+      # render_template looks in the templates/ folder for files.
+      # for example, the below file reads template/index.html
+      #
+      return render_template("index.html", **context)
 
 #
 # This is an example of a different path.  You can see it at
@@ -171,7 +175,7 @@ def index():
 #
 @app.route('/another')
 def another():
-  return render_template("anotherfile.html")
+  return render_template("test.html")
 
 
 # Example of adding new data to the database
@@ -184,10 +188,28 @@ def add():
   return redirect('/')
 
 
-@app.route('/login')
+@app.route('/login', methods=['POST'])
 def login():
-    abort(401)
-    this_is_never_executed()
+    cursor = g.conn.execute("SELECT user_id FROM App_user")
+    names = []
+    for result in cursor:
+      names.append(result['user_id'])
+    cursor.close()
+    
+    u = request.form['username']
+    p = request.form['password']
+    if p == 'password' and u in (names + ["admin"]):
+      global user
+      user = u
+      session['logged_in'] = True
+    else:
+      flash('Invalid login credentials')
+    return index()
+
+@app.route("/logout")
+def logout():
+    session['logged_in'] = False
+    return index()
 
 
 if __name__ == "__main__":
@@ -213,6 +235,7 @@ if __name__ == "__main__":
 
     HOST, PORT = host, port
     print "running on %s:%d" % (HOST, PORT)
+    app.secret_key = os.urandom(12)
     app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
 
 
