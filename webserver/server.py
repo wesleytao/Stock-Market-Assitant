@@ -14,7 +14,9 @@ Go to http://localhost:8111 in your browser
 A debugger such as "pdb" may be helpful for debugging.
 Read about it online.
 """
-
+from flask import Flask
+from flask import render_template, jsonify, request, redirect
+import requests
 import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
@@ -25,7 +27,7 @@ app = Flask(__name__, template_folder=tmpl_dir)
 
 
 
-# XXX: The Database URI should be in the format of: 
+# XXX: The Database URI should be in the format of:
 #
 #     postgresql://USER:PASSWORD@<IP_OF_POSTGRE_SQL_SERVER>/<DB_NAME>
 #
@@ -63,7 +65,7 @@ user = ''
 @app.before_request
 def before_request():
   """
-  This function is run at the beginning of every web request 
+  This function is run at the beginning of every web request
   (every time you enter an address in the web browser).
   We use it to setup a database connection that can be used throughout the request
 
@@ -72,7 +74,7 @@ def before_request():
   try:
     g.conn = engine.connect()
   except:
-    print "uh oh, problem connecting to database"
+    print ("uh oh, problem connecting to database")
     import traceback; traceback.print_exc()
     g.conn = None
 
@@ -97,7 +99,7 @@ def teardown_request(exception):
 #       @app.route("/foobar/", methods=["POST", "GET"])
 #
 # PROTIP: (the trailing / in the path is important)
-# 
+#
 # see for routing: http://flask.pocoo.org/docs/0.10/quickstart/#routing
 # see for decorators: http://simeonfranklin.com/blog/2012/jul/1/python-decorators-in-12-steps/
 #
@@ -114,7 +116,7 @@ def index():
   """
 
   # DEBUG: this is debugging code to see what request looks like
-  print request.args
+  print (request.args)
 
   if not session.get('logged_in'):
         return render_template('login.html')
@@ -129,8 +131,8 @@ def index():
         ids.append(result['user_id'])
         names.append(result['user_name'])
       cursor.close()
-      
-      
+
+
       # Flask uses Jinja templates, which is an extension to HTML where you can
       # pass data to a template and dynamically generate HTML based on the data
       # (you can think of it as simple PHP)
@@ -139,14 +141,14 @@ def index():
       # You can see an example template in templates/index.html
       #
       # context are the variables that are passed to the template.
-      # for example, "data" key in the context variable defined below will be 
+      # for example, "data" key in the context variable defined below will be
       # accessible as a variable in index.html:
       #
       #     # will print: [u'grace hopper', u'alan turing', u'ada lovelace']
       #     <div>{{data}}</div>
-      #     
+      #
       #     # creates a <div> tag for each element in data
-      #     # will print: 
+      #     # will print:
       #     #
       #     #   <div>grace hopper</div>
       #     #   <div>alan turing</div>
@@ -157,8 +159,8 @@ def index():
       #     {% endfor %}
       #
       context = dict(data = names)
-    
-    
+
+
       #
       # render_template looks in the templates/ folder for files.
       # for example, the below file reads template/index.html
@@ -167,22 +169,39 @@ def index():
 
 #
 # This is an example of a different path.  You can see it at
-# 
+#
 #     localhost:8111/another
 #
 # notice that the functio name is another() rather than index()
 # the functions for each app.route needs to have different names
 #
-@app.route('/another')
-def another():
-  return render_template("test.html")
+@app.route('/chathome')
+def chathome():
+  return render_template("chathome.html")
 
+
+@app.route('/chat', methods=["POST"])
+def chat():
+    """
+    chat end point that performs NLU using rasa.ai
+    and constructs response from response.py
+    """
+    # try:
+    response_b = requests.get("http://localhost:5005/conversations/default_sender/respond",
+     params={"query": request.form["text"]})
+    response = response_b.json()
+    if response:
+        str = response[0]['text']
+        return jsonify({"status": "success", "response": str})
+    else:
+        print("refresh")
+        return redirect("/")
 
 # Example of adding new data to the database
 @app.route('/add', methods=['POST'])
 def add():
   name = request.form['name']
-  print name
+  print (name)
   cmd = 'INSERT INTO test(name) VALUES (:name1), (:name2)';
   g.conn.execute(text(cmd), name1 = name, name2 = name);
   return redirect('/')
@@ -195,7 +214,7 @@ def login():
     for result in cursor:
       names.append(result['user_id'])
     cursor.close()
-    
+
     u = request.form['username']
     p = request.form['password']
     if p == 'password' and u in (names + ["admin"]):
@@ -234,7 +253,7 @@ if __name__ == "__main__":
     """
 
     HOST, PORT = host, port
-    print "running on %s:%d" % (HOST, PORT)
+    print ("running on %s:%d" % (HOST, PORT))
     app.secret_key = os.urandom(12)
     app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
 

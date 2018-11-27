@@ -1,0 +1,30 @@
+slots:
+  stock:
+    type: unfeaturized
+
+entities:
+- stock
+
+
+intents:
+ - greet
+ - thank_you
+ - request_stock
+ - consult_recommend
+
+templates:
+  utter_greet:
+    - "hey there! I am your personal financial advisor. "
+  utter_goodbye:
+    - "goodbye"
+    - "Bye-bye"
+  utter_default:
+    - "Sorry, I don't understand. But I'll keep learning."
+
+
+actions:
+- utter_greet
+- utter_goodbye
+- utter_default
+- action_search_stock
+- action_suggest_stock

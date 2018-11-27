@@ -1,0 +1,17 @@
+{
+  "states": [
+    "intent_consult_recommend",
+    "intent_greet",
+    "intent_request_stock",
+    "intent_thank_you",
+    "entity_stock",
+    "prev_action_listen",
+    "prev_action_restart",
+    "prev_action_default_fallback",
+    "prev_utter_greet",
+    "prev_utter_goodbye",
+    "prev_utter_default",
+    "prev_action_search_stock",
+    "prev_action_suggest_stock"
+  ]
+}
