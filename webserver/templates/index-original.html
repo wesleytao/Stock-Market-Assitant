@@ -1,0 +1,28 @@
+<html>
+  <style>
+    body{
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+
+<body>
+  <h1>Welcome
+    {% for n in data %}
+    {{n}}
+    {% endfor %}
+</h1>
+
+<p><a href="/chathome">Go to the chat page</a></p>
+<p><a href="/watchlist">Watchlist</a></p>
+<p><a href="/portfolio">Portfolio</a></p>
+
+<form method="POST" action="/search">
+<p>Search for a stock: <input type="text" name="stock"> <input type="submit" value="Search"></p>
+</form>
+
+</body>
+
+
+</html>
