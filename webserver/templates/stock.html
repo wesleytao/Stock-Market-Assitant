@@ -1,6 +1,6 @@
 <html>
   <style>
-    body{
+    body{ 
       font-size: 15pt;
       font-family: arial;
     }
@@ -8,17 +8,12 @@
 
 
 <body>
-  <h1>Welcome
-    {% for n in data %}
-    {{n}}
-    {% endfor %}
-</h1>
-
-<p><a href="/chathome">Go to the chat page</a></p>
-<p><a href="/watchlist">Watchlist</a></p>
-<p><a href="/portfolio">Portfolio</a></p>
-<p><a href="/stock">Search stock</a></p>
-
+  <h1>{{name}} ({{ticker}})</h1>
+<h2>{{industry}}</h2>
+  
+{% for n in data %}
+{{n}}<br>
+{% endfor %}
 
 <form method="POST" action="/add">
 <p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>

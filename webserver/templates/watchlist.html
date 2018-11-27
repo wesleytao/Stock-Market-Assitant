@@ -1,0 +1,25 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+
+<body>
+  <h1>Watchlist
+</h1>
+  
+{% for n in data %}
+{{n[0]}} ({{n[1]}}) <button type="submit" formmethod="POST" formaction="/delete" name="stock" value={{n[1]}}>X</button><br>
+{% endfor %}
+
+<form method="POST" action="/add">
+<p>Add stock to watchlist: <input type="text" name="stock" placeholder="ticker"> <input type="submit" value="Add"></p>
+</form>
+
+</body>
+
+
+</html>

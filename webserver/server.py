@@ -18,6 +18,8 @@ from flask import Flask
 from flask import render_template, jsonify, request, redirect
 import requests
 import os
+from random import choice
+from string import ascii_uppercase, digits
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response, session, flash, abort
@@ -61,6 +63,7 @@ engine.execute("""CREATE TABLE IF NOT EXISTS test (
 engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
 
 user = ''
+stock = ''
 
 @app.before_request
 def before_request():
@@ -200,11 +203,17 @@ def chat():
 # Example of adding new data to the database
 @app.route('/add', methods=['POST'])
 def add():
-  name = request.form['name']
-  print (name)
-  cmd = 'INSERT INTO test(name) VALUES (:name1), (:name2)';
-  g.conn.execute(text(cmd), name1 = name, name2 = name);
-  return redirect('/')
+
+  stock = request.form['stock']
+  g.conn.execute("INSERT INTO Watchlist VALUES ('" + user + "', '" + stock + "')")
+  return redirect('/watchlist')
+
+@app.route('/delete', methods=['POST'])
+def delete():
+  stock = request.form['stock']
+  g.conn.execute("DELETE FROM Watchlist WHERE user_id = '" + user + "' AND ticker = '" + stock + "' IF EXISTS")
+  return redirect('/watchlist')
+
 
 
 @app.route('/login', methods=['POST'])
@@ -230,6 +239,72 @@ def logout():
     session['logged_in'] = False
     return index()
 
+@app.route('/watchlist')
+def watchlist():
+    cursor = g.conn.execute("SELECT S.name, S.ticker FROM Stock S, Watchlist W WHERE S.ticker = W.ticker AND W.user_id = '" + user + "'")
+    stocks = []
+    for result in cursor:
+        stocks.append((result['name'], result['ticker']))
+    cursor.close()
+
+    context = dict(data = stocks)
+
+    return render_template("watchlist.html", **context)
+
+@app.route('/portfolio')
+def portfolio():
+    cursor = g.conn.execute("SELECT S.name, S.ticker, sum(T.amount) as amount FROM Stock S, Transaction_purchase T WHERE S.ticker = T.ticker AND T.user_id = '" + user + "' GROUP BY S.ticker")
+    purchases = []
+    for result in cursor:
+        name = result['name']
+        ticker = result['ticker']
+        amount = result['amount']
+        cursor2 = g.conn.execute("SELECT close_price FROM Tick WHERE ticker = '" + ticker + "' AND record_date = '2018-10-22'")
+        for result2 in cursor2:
+            price = result2['close_price']
+        cursor2.close()
+        purchases.append((name, ticker, amount, price, price*amount))
+    cursor.close()
+
+    context = dict(data = purchases)
+
+    return render_template("portfolio.html", **context)
+
+@app.route('/purchase', methods=['POST'])
+def purchase():
+      stock = request.form['stock']
+      amount = request.form['amount']
+      ID = ''.join(choice(ascii_uppercase + digits) for _ in range(12))
+      g.conn.execute("INSERT INTO Transaction_purchase VALUES ('" + ID + "', '" + user + "', '" + stock + "', '2018-10-22', " + amount + ")");
+      return redirect('/portfolio')
+
+@app.route('/stock')
+def stockinfo():
+    s = request.form['stock']
+    if s != '':
+        cursor = g.conn.execute("SELECT * FROM Stock WHERE ticker = '" + s + "'")
+        for result in cursor:
+            context = dict(ticker = result['ticker'], name = result['name'], industry = result['industry'])
+            #t = result['ticker']
+            #name = result['name']
+            #industry = result['industry']
+        cursor.close()
+
+        #context = dict(ticker = t, name = name, industry = industry)
+
+    else:
+        context = dict(ticker = None, name = None, industry = None)
+
+    return render_template("stock.html", **context)
+
+# =============================================================================
+# @app.route('/check')
+# def check():
+#     global stock
+#     stock = request.form['stock']
+#     print(stock)
+#     return redirect('/stock')
+# =============================================================================
 
 if __name__ == "__main__":
   import click

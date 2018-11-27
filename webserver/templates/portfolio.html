@@ -1,0 +1,41 @@
+<html>
+  <style>
+    body{ 
+      font-size: 15pt;
+      font-family: arial;
+    }
+  </style>
+
+
+<body>
+  <h1>Portfolio
+</h1>
+
+<table>
+<tr>
+<th>Stock</th>
+<th>Shares</th>
+<th>Price (10/22/18)</th>
+<th>Value</th>
+</tr>
+{% for n in data %}
+<tr>
+<td>{{n[0]}} ({{n[1]}}) </td>
+<td>{{n[2]}} </td>
+<td>{{n[3]}} </td>
+<td>${{n[4]}} </td>
+</tr>
+{% endfor %}
+</table>
+
+
+<form action="/purchase" method="POST">
+  <input type="text" name="stock" placeholder="Stock">
+  <input type="number" name="amount" placeholder="# Shares">
+  <input type="submit" value="Submit">
+</form>
+
+</body>
+
+
+</html>
