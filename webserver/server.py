@@ -207,15 +207,31 @@ def chat():
 @app.route('/add', methods=['POST'])
 def add():
   stock = request.form['stock']
-  q = "INSERT INTO Watchlist VALUES (%s, %s)"
-  g.conn.execute(q, (user, stock))
+  
+  cursor = g.conn.execute("SELECT ticker FROM Stock")
+  tickers = []
+  for result in cursor:
+      tickers.append(result['ticker'])
+  cursor.close()
+  
+  if stock in tickers:
+      q = "INSERT INTO Watchlist VALUES (%s, %s)"
+      g.conn.execute(q, (user, stock))
   return redirect('/watchlist')
 
 @app.route('/delete', methods=['POST'])
 def delete():
   stock = request.form['stock']
-  q = "DELETE FROM Watchlist WHERE user_id = %s AND ticker = %s"
-  g.conn.execute(q, (user, stock))
+  
+  cursor = g.conn.execute("SELECT ticker FROM Stock")
+  tickers = []
+  for result in cursor:
+      tickers.append(result['ticker'])
+  cursor.close()
+  
+  if stock in tickers:
+      q = "DELETE FROM Watchlist WHERE user_id = %s AND ticker = %s"
+      g.conn.execute(q, (user, stock))
   return redirect('/watchlist')
 
 
@@ -282,8 +298,16 @@ def purchase():
       stock = request.form['stock']
       amount = request.form['amount']
       ID = ''.join(choice(ascii_uppercase + digits) for _ in range(12))
-      q = "INSERT INTO Transaction_purchase VALUES (%s, %s, %s, '2018-10-22', %s)"
-      g.conn.execut(q, (ID, user, stock, amount));
+      
+      stocks = []
+      cursor = g.conn.execute("SELECT ticker FROM Stock")
+      for result in cursor:
+          stocks.append(result['ticker'])
+      cursor.close()
+          
+      if stock in stocks:
+          q = "INSERT INTO Transaction_purchase VALUES (%s, %s, %s, '2018-10-22', %s)"
+          g.conn.execute(q, (ID, user, stock, amount));
       return redirect('/portfolio')
 
 @app.route('/search', methods=['POST'])
