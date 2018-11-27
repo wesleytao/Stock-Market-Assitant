@@ -127,7 +127,10 @@ def index():
       #
       # example of a database query
       #
-      cursor = g.conn.execute("SELECT user_id, user_name FROM App_user WHERE user_id = '" + user + "'")
+      
+      q = "SELECT user_id, user_name FROM App_user WHERE user_id = %s"
+      print q
+      cursor = g.conn.execute(q, (user,))
       ids = []
       names = []
       for result in cursor:
@@ -203,15 +206,16 @@ def chat():
 # Example of adding new data to the database
 @app.route('/add', methods=['POST'])
 def add():
-
   stock = request.form['stock']
-  g.conn.execute("INSERT INTO Watchlist VALUES ('" + user + "', '" + stock + "')")
+  q = "INSERT INTO Watchlist VALUES (%s, %s)"
+  g.conn.execute(q, (user, stock))
   return redirect('/watchlist')
 
 @app.route('/delete', methods=['POST'])
 def delete():
   stock = request.form['stock']
-  g.conn.execute("DELETE FROM Watchlist WHERE user_id = '" + user + "' AND ticker = '" + stock + "'")
+  q = "DELETE FROM Watchlist WHERE user_id = %s AND ticker = %s"
+  g.conn.execute(q, (user, stock))
   return redirect('/watchlist')
 
 
@@ -241,7 +245,8 @@ def logout():
 
 @app.route('/watchlist')
 def watchlist():
-    cursor = g.conn.execute("SELECT S.name, S.ticker FROM Stock S, Watchlist W WHERE S.ticker = W.ticker AND W.user_id = '" + user + "'")
+    q = "SELECT S.name, S.ticker FROM Stock S, Watchlist W WHERE S.ticker = W.ticker AND W.user_id = %s"
+    cursor = g.conn.execute(q, (user,))
     stocks = []
     for result in cursor:
         stocks.append((result['name'], result['ticker']))
@@ -253,13 +258,15 @@ def watchlist():
 
 @app.route('/portfolio')
 def portfolio():
-    cursor = g.conn.execute("SELECT S.name, S.ticker, sum(T.amount) as amount FROM Stock S, Transaction_purchase T WHERE S.ticker = T.ticker AND T.user_id = '" + user + "' GROUP BY S.ticker")
+    q = "SELECT S.name, S.ticker, sum(T.amount) as amount FROM Stock S, Transaction_purchase T WHERE S.ticker = T.ticker AND T.user_id = %s GROUP BY S.ticker"
+    cursor = g.conn.execute(q, (user, ))
     purchases = []
     for result in cursor:
         name = result['name']
         ticker = result['ticker']
         amount = result['amount']
-        cursor2 = g.conn.execute("SELECT close_price FROM Tick WHERE ticker = '" + ticker + "' AND record_date = '2018-10-22'")
+        q2 = "SELECT close_price FROM Tick WHERE ticker = %s AND record_date = '2018-10-22'"
+        cursor2 = g.conn.execute(q2, (ticker, ))
         for result2 in cursor2:
             price = result2['close_price']
         cursor2.close()
@@ -275,7 +282,8 @@ def purchase():
       stock = request.form['stock']
       amount = request.form['amount']
       ID = ''.join(choice(ascii_uppercase + digits) for _ in range(12))
-      g.conn.execute("INSERT INTO Transaction_purchase VALUES ('" + ID + "', '" + user + "', '" + stock + "', '2018-10-22', " + amount + ")");
+      q = "INSERT INTO Transaction_purchase VALUES (%s, %s, %s, '2018-10-22', %s)"
+      g.conn.execut(q, (ID, user, stock, amount));
       return redirect('/portfolio')
 
 @app.route('/search', methods=['POST'])
@@ -288,7 +296,8 @@ def search():
     cursor.close()
     
     if s in tickers:
-        cursor2 = g.conn.execute("SELECT * FROM Stock WHERE ticker = '" + s + "'")
+        q2 = "SELECT * FROM Stock WHERE ticker = %s"
+        cursor2 = g.conn.execute(q2, (s,))
         for result in cursor2:
             ticker = result['ticker']
             name = result['name']
@@ -296,7 +305,8 @@ def search():
         cursor2.close()
         
         performance = []
-        cursor3 = g.conn.execute("SELECT * FROM Tick WHERE ticker = '" + s + "' ORDER BY record_date DESC")
+        q3 = "SELECT * FROM Tick WHERE ticker = %s ORDER BY record_date DESC"
+        cursor3 = g.conn.execute(q3, (s, ))
         for result in cursor3:
             performance.append((result['record_date'], result['open_price'], result['close_price']))
         cursor3.close()
