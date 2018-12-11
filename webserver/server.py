@@ -127,9 +127,9 @@ def index():
       #
       # example of a database query
       #
-      
+
       q = "SELECT user_id, user_name FROM App_user WHERE user_id = %s"
-      print q
+      print (q)
       cursor = g.conn.execute(q, (user,))
       ids = []
       names = []
@@ -207,13 +207,13 @@ def chat():
 @app.route('/add', methods=['POST'])
 def add():
   stock = request.form['stock']
-  
+
   cursor = g.conn.execute("SELECT ticker FROM Stock")
   tickers = []
   for result in cursor:
       tickers.append(result['ticker'])
   cursor.close()
-  
+
   if stock in tickers:
       q = "INSERT INTO Watchlist VALUES (%s, %s)"
       g.conn.execute(q, (user, stock))
@@ -222,13 +222,13 @@ def add():
 @app.route('/delete', methods=['POST'])
 def delete():
   stock = request.form['stock']
-  
+
   cursor = g.conn.execute("SELECT ticker FROM Stock")
   tickers = []
   for result in cursor:
       tickers.append(result['ticker'])
   cursor.close()
-  
+
   if stock in tickers:
       q = "DELETE FROM Watchlist WHERE user_id = %s AND ticker = %s"
       g.conn.execute(q, (user, stock))
@@ -298,13 +298,13 @@ def purchase():
       stock = request.form['stock']
       amount = request.form['amount']
       ID = ''.join(choice(ascii_uppercase + digits) for _ in range(12))
-      
+
       stocks = []
       cursor = g.conn.execute("SELECT ticker FROM Stock")
       for result in cursor:
           stocks.append(result['ticker'])
       cursor.close()
-          
+
       if stock in stocks:
           q = "INSERT INTO Transaction_purchase VALUES (%s, %s, %s, '2018-10-22', %s)"
           g.conn.execute(q, (ID, user, stock, amount));
@@ -318,7 +318,7 @@ def search():
     for result in cursor:
         tickers.append(result['ticker'])
     cursor.close()
-    
+
     if s in tickers:
         q2 = "SELECT * FROM Stock WHERE ticker = %s"
         cursor2 = g.conn.execute(q2, (s,))
@@ -327,14 +327,14 @@ def search():
             name = result['name']
             industry = result['industry']
         cursor2.close()
-        
+
         performance = []
         q3 = "SELECT * FROM Tick WHERE ticker = %s ORDER BY record_date DESC"
         cursor3 = g.conn.execute(q3, (s, ))
         for result in cursor3:
             performance.append((result['record_date'], result['open_price'], result['close_price']))
         cursor3.close()
-        
+
         context = dict(ticker = ticker, name = name, industry = industry, performance = performance)
         return render_template("stock.html", **context)
 
